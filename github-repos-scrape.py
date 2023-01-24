@@ -1,20 +1,43 @@
 import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
-import bs4
+from bs4 import BeautifulSoup
+import csv
 
-url= "https://github.com/swastkk?tab=repositories"
-page= requests.get(url)
-soup= bs4.BeautifulSoup(page.content, 'html.parser')
-lists= soup.find_all('h3', class_='wb-break-all') # used the underscore to have the class as css class not a python class
+page = requests.get('https://github.com/trending')
 
-for list in lists:
-    title= list.find('a').text
-    status= list.find('span', class_='Label Label--secondary v-align-middle ml-1 mb-1').text
-    desc= list.find('p', class_='Label Label--secondary v-align-middle ml-1 mb-1').text
-    language= list.find('span', itemprop_='programmingLanguage').text
-    last_updated= list.find('relative-time', class_='no-wrap').text
-    if_forked= list.find('span', 'a', class_='f6 color-fg-muted mb-1').text
-    info=[title, status,desc, language, last_updated, if_forked]
+# Create a BeautifulSoup object
+soup = BeautifulSoup(page.text, 'html.parser')
 
-print(info)
+# get the repo list
+repos = soup.find(class_="Box-row")
+repo_div= repos.find('div', class_='f6 color-fg-muted mt-2')
+star_a= repo_div.find('a', class_='Link--muted d-inline-block mr-3')
+# find all instances of that class (should return 25 as shown in the github main page)
+# repo_list = repo.find_all(class_='col-12 d-block width-full py-4 border-bottom')
+
+print(len(repos))
+
+# Open writer with name
+file_name = "github_trending_today.csv"
+# set newline to be '' so that that new rows are appended without skipping any
+f = csv.writer(open(file_name, 'w', newline=''))
+
+# write a new row as a header
+f.writerow(['Developer', 'Repo Name', 'Number of Stars'])
+
+for repo in repos:
+    # find the first <a> tag and get the text. Split the text using '/' to get an array with developer name and repo name
+    
+    # full_repo_name = repo_head.find('a['href']').text.split('/')
+    # extract the developer name at index 0
+   # developer = full_repo_name[0].strip()
+    # extract the repo name at index 1
+    # repo_name = full_repo_name[1].strip()
+    # find the first occurance of class octicon octicon-star and get the text from the parent (which is the number of stars)
+    stars = star_a.find('svg', class_='octicon octicon-star').parent.text.strip()
+    # strip() all to remove leading and traling white spaces
+  #  print('developer', developer)
+   # print('name', repo_name)
+    print('stars', stars)
+    print('Writing rows')
+    # add the information as a row into the csv table
+    f.writerow([developer, repo_name, stars])
